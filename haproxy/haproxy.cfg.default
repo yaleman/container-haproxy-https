@@ -26,5 +26,7 @@ frontend https-term
 frontend https-backends
 	bind *:8082
 	default_backend servershttps
+	mode tcp
+
 
 

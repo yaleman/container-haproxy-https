@@ -9,8 +9,8 @@ f() {
 	echo "Generating Certificate $@.."
 	FOLDER="ssl/$@"
 	openssl req -newkey rsa:2048 -extensions req_ext -keyout $FOLDER/cert.key -out $FOLDER/cert.crt -x509 -config openssl.cfg  -outform PEM
-	openssl rsa -in $FOLDER/cert.key -out $FOLDER/cert.pem -passin pass:example
-	cat $FOLDER/cert.crt >> $FOLDER/cert.pem
+	openssl rsa -in $FOLDER/cert.key -out $FOLDER/cert.key -passin pass:example
+	cat $FOLDER/cert* >> $FOLDER/cert.pem
 }
 
 cat > openssl.cfg <<-EOF
