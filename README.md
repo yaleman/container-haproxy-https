@@ -9,4 +9,13 @@ The first one's easier for configuration, the second one can be more performant 
 
 # Building the environment (work in progress)
 
-1. Run `./gen_certs.sh`, this will create a pair of x509 certificates and keys in the `ssl/` folder.
+2. `./rebuild.sh`, this does all the configuration of containers and builds configuration files.
+	* Generates x509 certificates and keys, strips the passphrases and combines them into bundles
+	* Creates a HAProxy configuration and confirms it's working
+3. `./start.sh` will start the containers and expose the ports.
+
+There's three services exposed:
+
+* 8080 - this is a plaintext HTTP load balancer, for checking that the backend nodes are working.
+* 8081 - HAProxy terminates SSL and forwards requests to the nginx servers over plaintext HTTP
+* 8082 - HAProxy forwards connections to the HTTPS-enabled nginx servers, allowing them to terminate the HTTPS connection.
