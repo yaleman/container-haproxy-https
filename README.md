@@ -1,29 +1,33 @@
 A playground for different methods of TLS load balancing.
 
-There's a couple of ways to do this:
+This is a little set of scripts to build a HTTPS load balancing example in docker, both terminating on the load balancer or on the backend servers. Uses NGINX and HAProxy, scripts do all the heavy lifting.
 
-* Terminate SSL on the load balancer
-* Terminate SSL on the web servers and use the load balancer to fling packets
+There's a couple of ways to do HTTPS termination:
 
-The first one's easier for configuration, the second one can be more performant and tends to be easier to troubleshoot.
+* Terminate the connection on the load balancer, which does the HTTPS negotiation.
+* Terminate the connection on the web servers and use the load balancer to fling packets.
 
-# Building the environment (work in progress)
+The first one's easier for configuration, the second one can be more performant and tends to be easier to troubleshoot - it all depends on your environment.
+
+# Interacting with this environment
 
 2. `./rebuild.sh`, this does all the configuration of containers and builds configuration files.
 	* Generates x509 certificates and keys, strips the passphrases and combines them into bundles
 	* Creates a HAProxy configuration and confirms it's working
 	* Tests the NGINX configuration files
 3. `./start.sh` will start the containers and expose the ports.
+4. `./stop.sh` will remove the docker containers when you're done.
+5. `./cleanup.sh` will remove some temporary files.
 
-There's three services exposed:
+There's three ports exposed by the load balancer:
 
 * 8080 - this is a plaintext HTTP load balancer, for checking that the backend nodes are working.
-* 8081 - HAProxy terminates SSL and forwards requests to the nginx servers over plaintext HTTP
-* 8082 - HAProxy forwards connections to the HTTPS-enabled nginx servers, allowing them to terminate the HTTPS connection.
+* 8081 - HAProxy terminates SSL and forwards requests to the NGINX servers over plaintext HTTP
+* 8082 - HAProxy forwards connections to the HTTPS-enabled NGINX servers, allowing them to terminate the HTTPS connection.
 
 It's easiest to make requests with curl or something like that, given that we're working with self-signed certificates and weird/wonderful configurations.
 
-This is an example of connecting to the third option, where the certificate is on the NGINX server. The response of "1" on the third-last line shows we were connected to NGINX server 1. Do the exact same thing again, I'll get "2" as (hopefully) we're running this in a test environment and the only ones using it.
+This is an example of connecting to the third option, where the certificate is on the NGINX server. The response of "1" on the third-last line shows we were connected to NGINX server 1. Do the exact same thing again, you'll get "2" as (hopefully) you're running this in a test environment and the only ones using it.
 
 	$ curl -kv https://192.168.99.100:8082
 	* Rebuilt URL to: https://192.168.99.100:8082/
@@ -38,7 +42,7 @@ This is an example of connecting to the third option, where the certificate is o
 	> Accept: */*
 	>
 	< HTTP/1.1 200 OK
-	< Server: nginx/1.11.10
+	< Server: NGINX/1.11.10
 	< Date: Sat, 18 Feb 2017 11:07:48 GMT
 	< Content-Type: text/html
 	< Content-Length: 2
@@ -51,7 +55,7 @@ This is an example of connecting to the third option, where the certificate is o
 	* Curl_http_done: called premature == 0
 	* Connection #0 to host 192.168.99.100 left intact
 
-The troubleshooting test you can do is as follows (again, my docker machine is running on 192.168.99.100):
+The troubleshooting test you can do is as follows (again, my docker machine is running on 192.168.99.100). This uses OpenSSL's handy s_client tool.
 
 	$ echo "" | openssl s_client -connect 192.168.99.100:8081
 	CONNECTED(00000003)
@@ -96,8 +100,8 @@ The troubleshooting test you can do is as follows (again, my docker machine is r
 
 Well, that was long! I've snipped out most of the certificate, since that's generated when you build the environment. The important part is that because port 8081 is the one where SSL terminates on the HAProxy instance, you'll get the same certificate every time. Try it a few times and see.
 
-OpenSSL s_client is like the SSL version of telnet. Obviously there's a lot more configuration options and output, but if you just want to do some basic testing, `openssl s_client -connect ip:port` will get you a long way. Throw `-servername example.com` on the end and you'll test SNI, a topic for another item.
+OpenSSL s_client is like the SSL version of telnet. Obviously there's a lot more configuration options and output, but if you just want to do some basic testing, `openssl s_client -connect ip:port` will get you a long way. Throw `-servername example.com` on the end and you'll test SNI, a topic for another time.
 
 The `echo "" |` part of the command is us throwing something at the server to make it drop the connection.
 
-Similarly, if you do the test multiple times against port 8082, you'll get different certificates each time because you're connecting to the two NGINX servers, and their certificates are generated based on different keys - even if they're the same otherwise.
+If you do the test multiple times against port 8082, you'll get different certificates each time because you're connecting in a round-robin method to the two NGINX servers, and their certificates are generated based on different keys - even if they're the same otherwise.
