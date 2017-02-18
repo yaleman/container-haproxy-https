@@ -29,23 +29,16 @@ EOF
 
 echo "Done generating HAProxy configuration."
 
-echo ""
-echo "Checking HAProxy configuration..."
-
 RUNCMD="docker run -it --rm --name haproxy-https-haproxy -v $(pwd)/ssl/certHA:/etc/ssl:ro -v $(pwd)/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg haproxy"
 
-echo "SSL Cert list on HAproxy"
-
-CMD="find /etc/ssl/"
-$RUNCMD $CMD
-
-echo "Testing configuration..."
+echo ""
+echo "Testing HAProxy configuration..."
 CMD="haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"
 $RUNCMD $CMD
 
-
-echo "Testing NGINX instance..."
-docker run -it --rm --name haproxy-https-nginx-test -v $(pwd)/www/conf_d-default.conf:/etc/nginx/conf.d/default.conf:ro -v $(pwd)/www/nginx.conf:/etc/nginx/nginx.conf:ro -v $(pwd)/ssl/2:/etc/ssl:ro -v $(pwd)/www/2:/usr/share/nginx/html:ro nginx find /etc/ssl
+echo ""
+echo "Testing NGINX configuration..."
+docker run -it --rm --name haproxy-https-nginx-test -v $(pwd)/www/conf_d-default.conf:/etc/nginx/conf.d/default.conf:ro -v $(pwd)/www/nginx.conf:/etc/nginx/nginx.conf:ro -v $(pwd)/ssl/2:/etc/ssl:ro -v $(pwd)/www/2:/usr/share/nginx/html:ro nginx /usr/sbin/nginx -t
 
 echo ""
 echo "Done."
