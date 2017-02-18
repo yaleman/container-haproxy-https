@@ -2,6 +2,8 @@
 
 rm ssl/*
 
+# information on how SANs work - http://blog.endpoint.com/2014/10/openssl-csr-with-alternative-names-one.html
+
 cat > openssl.cfg <<-EOF
 [ req ]
 prompt = no
