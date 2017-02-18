@@ -1,0 +1,5 @@
+[x] script generating certs
+[ ] make haproxy configs for both methods
+[ ] make nginx configs for both methods
+[ ] identify where nginx configs go
+[ ] write scripts for checking keys
